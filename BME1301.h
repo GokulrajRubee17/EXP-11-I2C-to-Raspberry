@@ -13,7 +13,7 @@ typedef struct {
     float hum;
 } bme1301data;
 
-void bme1301init(i2c_inst_t *i2c);
-bme1301data bme1301read(i2c_inst_t *i2c);
+void bme1301_init(i2c_inst_t *i2c);
+bme1301data bme1301_read(i2c_inst_t *i2c);
 
 #endif
