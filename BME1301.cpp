@@ -1,14 +1,14 @@
 
-#include "bme280.h"
+#include "bme1301.h"
 #include <math.h>
 
-// BME280 Registers
-#define BME280_REG_TEMP     0xFA
-#define BME280_REG_PRESS    0xF7
-#define BME280_REG_HUM      0xFD
-#define BME280_REG_CONFIG   0xF5
-#define BME280_REG_CTRL_HUM 0xF2
-#define BME280_REG_CTRL_MEAS 0xF4
+// BME1301 Registers
+#define BME1301_REG_TEMP     0xFA
+#define BME1301_REG_PRESS    0xF7
+#define BME1301_REG_HUM      0xFD
+#define BME1301_REG_CONFIG   0xF5
+#define BME1301_REG_CTRL_HUM 0xF2
+#define BME1301_REG_CTRL_MEAS 0xF4
 
 // Compensation parameters
 static int32_t t_fine;
@@ -23,8 +23,8 @@ static void read_compensation_params(i2c_inst_t *i2c) {
     uint8_t buf[26];
 
     // Read temperature/pressure compensation (0x88-0xA1)
-    i2c_write_blocking(i2c, BME280_ADDR, (uint8_t[]){0x88}, 1, true);
-    i2c_read_blocking(i2c, BME280_ADDR, buf, 26, false);
+    i2c_write_blocking(i2c, BME1301_ADDR, (uint8_t[]){0x88}, 1, true);
+    i2c_read_blocking(i2c, BME1301_ADDR, buf, 26, false);
 
     dig_T1 = (buf[1] << 8) | buf[0];
     dig_T2 = (buf[3] << 8) | buf[2];
@@ -41,8 +41,8 @@ static void read_compensation_params(i2c_inst_t *i2c) {
     dig_H1 = buf[25];
 
     // Read humidity compensation (0xE1-0xE7)
-    i2c_write_blocking(i2c, BME280_ADDR, (uint8_t[]){0xE1}, 1, true);
-    i2c_read_blocking(i2c, BME280_ADDR, buf, 7, false);
+    i2c_write_blocking(i2c, BME1301_ADDR, (uint8_t[]){0xE1}, 1, true);
+    i2c_read_blocking(i2c, BME1301_ADDR, buf, 7, false);
 
     dig_H2 = (buf[1] << 8) | buf[0];
     dig_H3 = buf[2];
@@ -51,28 +51,28 @@ static void read_compensation_params(i2c_inst_t *i2c) {
     dig_H6 = (int8_t)buf[6];
 }
 
-void bme280_init(i2c_inst_t *i2c) {
+void BME1301_init(i2c_inst_t *i2c) {
     // Soft reset
     uint8_t reset_cmd = 0xB6;
-    i2c_write_blocking(i2c, BME280_ADDR, (uint8_t[]){0xE0, reset_cmd}, 2, false);
+    i2c_write_blocking(i2c, BME1301_ADDR, (uint8_t[]){0xE0, reset_cmd}, 2, false);
     sleep_ms(100);
 
     // Read compensation data
     read_compensation_params(i2c);
 
     // Configure humidity, pressure, and temperature oversampling
-    i2c_write_blocking(i2c, BME280_ADDR, (uint8_t[]){BME280_REG_CTRL_HUM, 0x01}, 2, false);
-    i2c_write_blocking(i2c, BME280_ADDR, (uint8_t[]){BME280_REG_CTRL_MEAS, 0x27}, 2, false);
-    i2c_write_blocking(i2c, BME280_ADDR, (uint8_t[]){BME280_REG_CONFIG, 0x00}, 2, false);
+    i2c_write_blocking(i2c, BME1301_ADDR, (uint8_t[]){BME1301_REG_CTRL_HUM, 0x01}, 2, false);
+    i2c_write_blocking(i2c, BME1301_ADDR, (uint8_t[]){BME1301_REG_CTRL_MEAS, 0x27}, 2, false);
+    i2c_write_blocking(i2c, BME1301_ADDR, (uint8_t[]){BME1301_REG_CONFIG, 0x00}, 2, false);
 }
 
-bme280_data bme280_read(i2c_inst_t *i2c) {
+BME1301_data BME1301_read(i2c_inst_t *i2c) {
     uint8_t data[8];
-    bme280_data result;
+    BME1301_data result;
 
     // Read all data (pressure + temp + hum)
-    i2c_write_blocking(i2c, BME280_ADDR, (uint8_t[]){BME280_REG_PRESS}, 1, true);
-    i2c_read_blocking(i2c, BME280_ADDR, data, 8, false);
+    i2c_write_blocking(i2c, BME1301_ADDR, (uint8_t[]){BME1301_REG_PRESS}, 1, true);
+    i2c_read_blocking(i2c, BME1301_ADDR, data, 8, false);
 
     // Pressure (20-bit)
     int32_t adc_P = ((uint32_t)data[0] << 12) | ((uint32_t)data[1] << 4) | (data[2] >> 4);
